@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ByeBye Buddy - Calming Transition Screen Time Timer</title>
+  <meta name="description" content="Help preschoolers end screen time calmly and positive transition to what's next.">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Global Header/Top bar -->
+    <div class="top-nav">
+      <div class="star-counter" id="star-counter">
+        <span>⭐</span><span id="stars-count">0</span>
+      </div>
+      <button class="parent-btn" id="parent-settings-btn" aria-label="Parent settings lock">
+        ⚙️ Parents
+      </button>
+    </div>
+
+    <!-- Main screen transition wrapper -->
+    <div class="screens">
+      
+      <!-- SCREEN 1: HOME -->
+      <section class="screen active" id="screen-home">
+        <div style="text-align: center; margin-top: 3.5rem;">
+          <h1>ByeBye Buddy</h1>
+          <p class="tagline">Say bye-bye to screens… and hello to fun!</p>
+        </div>
+
+        <div class="buddy-wrapper">
+          <!-- Animated SVG Buddy character (Default Home state) -->
+          <svg id="buddy-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="body-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#000" stop-opacity="0.05"/>
+              </linearGradient>
+            </defs>
+            
+            <g class="body-group">
+              <!-- Cute Leaf on Head -->
+              <path d="M 100 45 Q 90 25 100 15 Q 110 25 100 45 Z" fill="#2ECC71" />
+              <path d="M 100 45 Q 98 30 100 15" stroke="#27AE60" stroke-width="2" fill="none" />
+              
+              <!-- Left Arm -->
+              <path id="buddy-left-arm" class="left-arm" d="M 50 110 Q 30 110 25 120 Q 20 130 35 125 Z" fill="hsl(190, 85%, 65%)" class="buddy-body" />
+              <!-- Right Arm -->
+              <path id="buddy-right-arm" class="right-arm" d="M 150 110 Q 170 110 175 120 Q 180 130 165 125 Z" fill="hsl(190, 85%, 65%)" class="buddy-body" />
+              
+              <!-- Legs / Feet -->
+              <rect x="65" y="160" width="25" height="15" rx="10" fill="#E67E22" />
+              <rect x="110" y="160" width="25" height="15" rx="10" fill="#E67E22" />
+              
+              <!-- Main Rounded Blob Body -->
+              <rect class="buddy-body" x="48" y="45" width="104" height="120" rx="52" fill="hsl(190, 85%, 65%)" />
+              <rect x="48" y="45" width="104" height="120" rx="52" fill="url(#body-grad)" />
+
+              <!-- Rosy Cheeks -->
+              <circle cx="70" cy="115" r="10" fill="#F08080" opacity="0.6" />
+              <circle cx="130" cy="115" r="10" fill="#F08080" opacity="0.6" />
+
+              <!-- Eyes (White + Pupils + Sparkle) -->
+              <g class="eyes">
+                <circle class="left-eye" cx="80" cy="90" r="12" fill="white" />
+                <circle class="left-eye buddy-eye-fill" cx="82" cy="92" r="7" fill="#2C3E50" />
+                <circle class="left-eye" cx="80" cy="89" r="2.5" fill="white" /> <!-- Sparkle -->
+                
+                <circle class="right-eye" cx="120" cy="90" r="12" fill="white" />
+                <circle class="right-eye buddy-eye-fill" cx="118" cy="92" r="7" fill="#2C3E50" />
+                <circle class="right-eye" cx="116" cy="89" r="2.5" fill="white" /> <!-- Sparkle -->
+              </g>
+              
+              <!-- Soft Eyebrows -->
+              <path id="buddy-left-eyebrow" d="M 72 75 Q 80 72 88 75" stroke="#2C3E50" stroke-width="3" stroke-linecap="round" fill="none" />
+              <path id="buddy-right-eyebrow" d="M 112 75 Q 120 72 128 75" stroke="#2C3E50" stroke-width="3" stroke-linecap="round" fill="none" />
+
+              <!-- Mouth (Dynamic path controlled by JS) -->
+              <path id="buddy-mouth" d="M 90 120 Q 100 135 110 120" stroke="#2C3E50" stroke-width="4.5" stroke-linecap="round" fill="none" />
+            </g>
+          </svg>
+        </div>
+
+        <button class="btn-primary" id="start-btn">Start Screen Time</button>
+      </section>
+
+      <!-- SCREEN 2: COUNTDOWN & TIMER -->
+      <section class="screen" id="screen-countdown">
+        <div style="text-align: center; margin-top: 3.5rem;">
+          <h2 style="font-size: 1.8rem; font-weight:600;">Play Time</h2>
+        </div>
+
+        <div class="timer-container">
+          <svg class="timer-ring" viewBox="0 0 220 220">
+            <circle class="timer-ring-back" cx="110" cy="110" r="100" />
+            <circle class="timer-ring-front" id="timer-progress" cx="110" cy="110" r="100" />
+          </svg>
+          <div class="time-display" id="timer-time">00:00</div>
+        </div>
+
+        <!-- Warning Card overlay overlaying during alerts -->
+        <div class="warning-box" id="warning-overlay" style="display: none;">
+          <h3 class="warning-title" id="warn-title">5 Minutes!</h3>
+          <p class="warning-desc" id="warn-desc">Buddy waves: Screen time wrapping up soon.</p>
+        </div>
+
+        <div style="height: 4rem;"></div> <!-- Spacer -->
+      </section>
+
+      <!-- SCREEN 3: TRANSITION CHOICE -->
+      <section class="screen" id="screen-transition">
+        <div style="text-align: center; margin-top: 3.5rem; display: flex; flex-direction:column; align-items:center; gap: 0.5rem;">
+          <h2>Time to say bye-bye!</h2>
+          <p class="tagline">What fun thing do we want to do next?</p>
+        </div>
+
+        <div class="activity-grid" id="activities-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div style="height: 2rem;"></div>
+      </section>
+
+      <!-- SCREEN 4: CELEBRATION -->
+      <section class="screen" id="screen-celebration">
+        <canvas class="celebration-canvas" id="celebration-canvas"></canvas>
+        
+        <div style="text-align: center; margin-top: 4.5rem; z-index: 10;">
+          <div class="star-award-badge">⭐</div>
+          <h2 style="font-size: 2.5rem; margin-top: 1rem;">Yay! Great Job!</h2>
+          <p class="tagline">You helped Buddy wave bye-bye!</p>
+        </div>
+
+        <button class="btn-primary" id="celebration-done-btn" style="z-index: 10;">Let's Play!</button>
+      </section>
+
+      <!-- SCREEN 5: PARENT SETTINGS -->
+      <section class="screen" id="screen-parent">
+        <div style="text-align: center; margin-top: 3.5rem; width: 100%;">
+          <h2>Parent Settings</h2>
+          <p class="tagline">Customize Buddy for your child</p>
+        </div>
+
+        <form class="settings-scroll" id="settings-form">
+          <div class="settings-group">
+            <label for="char-color">Buddy's Color</label>
+            <select id="char-color" required>
+              <option value="hsl(190, 85%, 65%)">Sky Blue</option>
+              <option value="hsl(150, 70%, 65%)">Mint Green</option>
+              <option value="hsl(340, 90%, 70%)">Bubblegum Pink</option>
+              <option value="hsl(45, 95%, 65%)">Sunny Yellow</option>
+              <option value="hsl(280, 75%, 70%)">Soft Purple</option>
+            </select>
+          </div>
+
+          <div class="settings-group">
+            <label for="screen-duration">Screen Time Duration</label>
+            <select id="screen-duration" required>
+              <option value="0.5">30 Seconds (For Testing)</option>
+              <option value="1">1 Minute</option>
+              <option value="5">5 Minutes</option>
+              <option value="15">15 Minutes</option>
+              <option value="30">30 Minutes</option>
+              <option value="45">45 Minutes</option>
+              <option value="60">60 Minutes</option>
+            </select>
+          </div>
+
+          <div class="settings-group">
+            <label>Next Activities (4 choices)</label>
+            <div class="settings-activity-list" id="activity-setup-list">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <div style="display:flex; gap:1rem; margin-top: 1rem; width: 100%;">
+            <button type="button" class="btn-secondary" id="back-settings-btn">Cancel</button>
+            <button type="submit" class="btn-submit">Save Settings</button>
+          </div>
+        </form>
+      </section>
+
+    </div>
+
+    <!-- PARENT GATE LOCK DIALOG -->
+    <div class="modal" id="parent-gate-modal">
+      <div class="modal-content" id="gate-modal-content">
+        <h3 class="modal-title">Parents Only</h3>
+        <p class="tagline">Solve this math puzzle to access settings:</p>
+        <div class="gate-question">
+          <span id="gate-num1">0</span> + <span id="gate-num2">0</span> = ?
+        </div>
+        <form id="gate-form" style="display: flex; flex-direction: column; gap: 1rem;">
+          <input type="number" class="gate-input" id="gate-answer-input" placeholder="Your Answer" required min="0" max="20" autofocus>
+          <div class="btn-row">
+            <button type="button" class="btn-secondary" id="close-gate-btn">Cancel</button>
+            <button type="submit" class="btn-submit">Unlock</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- TESTING/SIMULATION DASHBOARD DRAWER (QA/Developer tool) -->
+    <div class="testing-drawer" id="testing-drawer">
+      <button class="testing-drawer-toggle" id="test-drawer-toggle">🔧 Dev Dashboard</button>
+      <p style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Simulate Transition States:</p>
+      <div class="test-btn-group">
+        <button class="test-btn" id="test-5m">Trigger Warning 1</button>
+        <button class="test-btn" id="test-1m">Trigger Warning 2</button>
+        <button class="test-btn" id="test-finish">Force Time's Up</button>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

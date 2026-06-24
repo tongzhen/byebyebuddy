@@ -35,7 +35,7 @@ class MainRouter extends StatefulWidget {
   State<MainRouter> createState() => _MainRouterState();
 }
 
-class _MainRouterState extends State<MainRouter> {
+class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
   final AudioPlayer _audioPlayer = AudioPlayer();
   String _currentScreen = 'home';
   int _stars = 0;
@@ -50,9 +50,24 @@ class _MainRouterState extends State<MainRouter> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadStoredSettings();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _stopSound();
+    }
   }
 
   Future<void> _loadStoredSettings() async {
@@ -132,6 +147,10 @@ class _MainRouterState extends State<MainRouter> {
     }
   }
 
+  void _stopSound() {
+    _audioPlayer.stop();
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (_currentScreen) {
@@ -144,6 +163,7 @@ class _MainRouterState extends State<MainRouter> {
             setState(() => _currentScreen = 'countdown');
           },
           onOpenSettings: () {
+            _stopSound();
             setState(() => _currentScreen = 'settings');
           },
         );
@@ -169,6 +189,7 @@ class _MainRouterState extends State<MainRouter> {
       case 'celebration':
         return CelebrationScreen(
           onFinish: () {
+            _stopSound();
             setState(() => _currentScreen = 'home');
           },
         );
@@ -178,9 +199,11 @@ class _MainRouterState extends State<MainRouter> {
           initialDuration: _durationMinutes,
           initialActivities: _activities,
           onCancel: () {
+            _stopSound();
             setState(() => _currentScreen = 'home');
           },
           onSave: (color, duration, acts) {
+            _stopSound();
             _saveSettings(color, duration, acts);
           },
         );

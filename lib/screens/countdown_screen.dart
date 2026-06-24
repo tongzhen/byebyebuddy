@@ -137,7 +137,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                         child: CircularProgressIndicator(
                           value: percent,
                           strokeWidth: 10,
-                          backgroundColor: Colors.black.withOpacity(0.05),
+                          backgroundColor: Colors.black.withValues(alpha: 0.05),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             percent < 0.2
                                 ? const Color(0xFFE74C3C) // Alert Red
@@ -214,7 +214,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                     border: Border.all(color: const Color(0xFFF39C12), width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),

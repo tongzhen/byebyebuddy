@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'screens/home_screen.dart';
 import 'screens/countdown_screen.dart';
 import 'screens/transition_screen.dart';
@@ -35,6 +36,7 @@ class MainRouter extends StatefulWidget {
 }
 
 class _MainRouterState extends State<MainRouter> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
   String _currentScreen = 'home';
   int _stars = 0;
   Color _characterColor = const Color(0xFF5DADE2); // Sky Blue
@@ -48,9 +50,9 @@ class _MainRouterState extends State<MainRouter> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _loadStoredSettings();
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStoredSettings() async {
@@ -78,7 +80,7 @@ class _MainRouterState extends State<MainRouter> {
   Future<void> _saveSettings(Color color, double duration, List<Map<String, String>> newActs) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('duration', duration);
-    await prefs.setInt('char_color', color.value);
+    await prefs.setInt('char_color', color.toARGB32());
     
     for (int i = 0; i < 4; i++) {
       await prefs.setString('act_label_$i', newActs[i]['label']!);
@@ -101,9 +103,33 @@ class _MainRouterState extends State<MainRouter> {
     await prefs.setInt('stars', _stars);
   }
 
-  // Audio helper (prints to debug console in test/offline environments)
-  void _playSound(String type) {
+  // Audio helper (plays actual sounds using audioplayers)
+  void _playSound(String type) async {
     debugPrint('[AudioService] Play sound: $type');
+    try {
+      Source? source;
+      switch (type) {
+        case 'start':
+          source = AssetSource('audio/start.mp3');
+          break;
+        case 'warning':
+          source = AssetSource('audio/warning.mp3');
+          break;
+        case 'timesup':
+          source = AssetSource('audio/timesup.mp3');
+          break;
+        case 'celebration':
+          source = AssetSource('audio/celebration.mp3');
+          break;
+      }
+
+      if (source != null) {
+        await _audioPlayer.stop();
+        await _audioPlayer.play(source);
+      }
+    } catch (e) {
+      debugPrint('Error playing sound: $e');
+    }
   }
 
   @override

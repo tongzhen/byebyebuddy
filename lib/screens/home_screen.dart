@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -74,7 +74,7 @@ class HomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       elevation: 2,
-                      shadowColor: Colors.black.withOpacity(0.1),
+                      shadowColor: Colors.black.withValues(alpha: 0.1),
                     ),
                   ),
                 ],
@@ -123,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     elevation: 8,
-                    shadowColor: const Color(0xFF6A7BFE).withOpacity(0.4),
+                    shadowColor: const Color(0xFF6A7BFE).withValues(alpha: 0.4),
                   ),
                   child: const Text(
                     'Start Screen Time',

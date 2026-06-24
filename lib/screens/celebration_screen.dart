@@ -85,7 +85,7 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                         style: TextStyle(
                           fontFamily: 'Fredoka',
                           fontSize: 18,
-                          color: const Color(0xFF2C3E50).withOpacity(0.6),
+                          color: const Color(0xFF2C3E50).withValues(alpha: 0.6),
                         ),
                       ),
                     ],

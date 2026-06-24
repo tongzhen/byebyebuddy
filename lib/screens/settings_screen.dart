@@ -84,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     if (!_gateUnlocked) {
       return Scaffold(
-        backgroundColor: Colors.black.withOpacity(0.4),
+        backgroundColor: Colors.black.withValues(alpha: 0.4),
         body: Center(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -201,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: _colors.map((color) {
-                final isSelected = _selectedColor.value == color.value;
+                final isSelected = _selectedColor.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = color),
                   child: CircleAvatar(
@@ -220,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<double>(
-              value: _selectedDuration,
+              initialValue: _selectedDuration,
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               ),

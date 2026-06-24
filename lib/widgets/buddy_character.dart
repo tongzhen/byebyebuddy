@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 enum BuddyState { happy, warning, transition, cheering }
@@ -187,7 +186,7 @@ class BuddyPainter extends CustomPainter {
 
     // 4. Rosy Cheeks
     final cheekPaint = Paint()
-      ..color = const Color(0xFFF08080).withOpacity(0.6);
+      ..color = const Color(0xFFF08080).withValues(alpha: 0.6);
     canvas.drawCircle(
       Offset(size.width * 0.35, size.height * 0.58),
       10,

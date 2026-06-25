@@ -45,15 +45,17 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
   String _currentScreen = 'home';
   String? _selectedActivityLabel;
   String? _selectedActivityIcon;
+  String? _selectedActivityImagePath;
   int _stars = 0;
   Color _characterColor = const Color(0xFF5DADE2); // Sky Blue
   double _durationMinutes = 5.0;
+  List<String> _recentImages = [];
 
   List<Map<String, String>> _activities = [
-    {'label': 'Read a Book', 'icon': '📚'},
-    {'label': 'Play Blocks', 'icon': '🧱'},
-    {'label': 'Draw & Color', 'icon': '🎨'},
-    {'label': 'Play Outside', 'icon': '🌳'},
+    {'label': 'Read a Book', 'icon': '📚', 'imagePath': ''},
+    {'label': 'Play Blocks', 'icon': '🧱', 'imagePath': ''},
+    {'label': 'Draw & Color', 'icon': '🎨', 'imagePath': ''},
+    {'label': 'Play Outside', 'icon': '🌳', 'imagePath': ''},
   ];
 
   @override
@@ -101,10 +103,17 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
       for (int i = 0; i < 4; i++) {
         final label = prefs.getString('act_label_$i');
         final icon = prefs.getString('act_icon_$i');
+        final imagePath = prefs.getString('act_image_$i') ?? '';
         if (label != null && icon != null) {
-          _activities[i] = {'label': label, 'icon': icon};
+          _activities[i] = {
+            'label': label,
+            'icon': icon,
+            'imagePath': imagePath,
+          };
         }
       }
+
+      _recentImages = prefs.getStringList('recent_images') ?? [];
     });
   }
 
@@ -113,15 +122,29 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
     await prefs.setDouble('duration', duration);
     await prefs.setInt('char_color', color.toARGB32());
     
+    List<String> updatedRecent = List.from(_recentImages);
     for (int i = 0; i < 4; i++) {
       await prefs.setString('act_label_$i', newActs[i]['label']!);
       await prefs.setString('act_icon_$i', newActs[i]['icon']!);
+      final path = newActs[i]['imagePath'] ?? '';
+      await prefs.setString('act_image_$i', path);
+      
+      if (path.isNotEmpty && !updatedRecent.contains(path)) {
+        updatedRecent.insert(0, path);
+      }
     }
+    
+    // Keep only last 10
+    if (updatedRecent.length > 10) {
+      updatedRecent = updatedRecent.sublist(0, 10);
+    }
+    await prefs.setStringList('recent_images', updatedRecent);
 
     setState(() {
       _characterColor = color;
       _durationMinutes = duration;
       _activities = newActs;
+      _recentImages = updatedRecent;
       _currentScreen = 'home';
     });
   }
@@ -221,12 +244,13 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
         return TransitionScreen(
           activities: _activities,
           characterColor: _characterColor,
-          onSelectActivity: (label, icon) async {
+          onSelectActivity: (activity) async {
             await _incrementStars();
             _playSound('celebration');
             setState(() {
-              _selectedActivityLabel = label;
-              _selectedActivityIcon = icon;
+              _selectedActivityLabel = activity['label'];
+              _selectedActivityIcon = activity['icon'];
+              _selectedActivityImagePath = activity['imagePath'];
               _currentScreen = 'celebration';
             });
           },
@@ -235,6 +259,7 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
         return CelebrationScreen(
           activityLabel: _selectedActivityLabel ?? '',
           activityIcon: _selectedActivityIcon ?? '⭐',
+          activityImagePath: _selectedActivityImagePath,
           onFinish: () {
             _stopSound();
             setState(() => _currentScreen = 'home');
@@ -245,6 +270,7 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
           initialColor: _characterColor,
           initialDuration: _durationMinutes,
           initialActivities: _activities,
+          recentImages: _recentImages,
           onCancel: () {
             _stopSound();
             setState(() => _currentScreen = 'home');

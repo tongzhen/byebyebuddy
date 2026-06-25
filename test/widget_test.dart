@@ -112,7 +112,7 @@ void main() {
     // Now we should be in settings
     expect(find.text('Parent Settings'), findsOneWidget);
     
-    // Find back button (AppBar leading)
+    // Find back button (AppBar leading) and tap it to save
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

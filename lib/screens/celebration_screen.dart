@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 
@@ -5,12 +6,14 @@ class CelebrationScreen extends StatefulWidget {
   final VoidCallback onFinish;
   final String activityLabel;
   final String activityIcon;
+  final String? activityImagePath;
 
   const CelebrationScreen({
     super.key,
     required this.onFinish,
     required this.activityLabel,
     required this.activityIcon,
+    this.activityImagePath,
   });
 
   @override
@@ -109,10 +112,25 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              widget.activityIcon,
-                              style: const TextStyle(fontSize: 60),
-                            ),
+                            if (widget.activityImagePath != null && widget.activityImagePath!.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.file(
+                                  File(widget.activityImagePath!),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Text(
+                                    widget.activityIcon,
+                                    style: const TextStyle(fontSize: 60),
+                                  ),
+                                ),
+                              )
+                            else
+                              Text(
+                                widget.activityIcon,
+                                style: const TextStyle(fontSize: 60),
+                              ),
                             const SizedBox(height: 10),
                             Text(
                               'Time for ${widget.activityLabel}!',

@@ -1,10 +1,15 @@
 import 'dart:math' as math;
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class SettingsScreen extends StatefulWidget {
   final Color initialColor;
   final double initialDuration;
   final List<Map<String, String>> initialActivities;
+  final List<String> recentImages;
   final Function(Color, double, List<Map<String, String>>) onSave;
   final VoidCallback onCancel;
 
@@ -13,6 +18,7 @@ class SettingsScreen extends StatefulWidget {
     required this.initialColor,
     required this.initialDuration,
     required this.initialActivities,
+    required this.recentImages,
     required this.onSave,
     required this.onCancel,
   });
@@ -72,6 +78,160 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _errorMessage = 'Oops! Try again.';
       });
     }
+  }
+
+  Future<void> _pickMedia(int index) async {
+    final ImagePicker picker = ImagePicker();
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Choose Icon or Photo',
+                  style: TextStyle(
+                    fontFamily: 'Fredoka',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Emoji Gallery
+                SizedBox(
+                  height: 60,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _icons.length,
+                    itemBuilder: (context, i) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _activities[index]['icon'] = _icons[i];
+                            _activities[index]['imagePath'] = '';
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF2F4FC),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(_icons[i], style: const TextStyle(fontSize: 24)),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Recent Images
+                if (widget.recentImages.isNotEmpty) ...[
+                  const Text(
+                    'Recent Photos',
+                    style: TextStyle(
+                      fontFamily: 'Fredoka',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: widget.recentImages.length,
+                      itemBuilder: (context, i) {
+                        final rPath = widget.recentImages[i];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _activities[index]['imagePath'] = rPath;
+                              _activities[index]['icon'] = '📸'; // placeholder icon
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            width: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.black12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(File(rPath), fit: BoxFit.cover),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                // Camera & Gallery Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+                          if (photo != null) _saveLocalImage(index, photo.path);
+                          if (mounted) Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Take Photo'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) _saveLocalImage(index, image.path);
+                          if (mounted) Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveLocalImage(int index, String tempPath) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final String fileName = 'activity_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final String localPath = p.join(directory.path, fileName);
+    
+    await File(tempPath).copy(localPath);
+    
+    setState(() {
+      _activities[index]['imagePath'] = localPath;
+    });
   }
 
   @override
@@ -185,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         foregroundColor: const Color(0xFF2C3E50),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: widget.onCancel,
+          onPressed: () => widget.onSave(_selectedColor, _selectedDuration, _activities),
         ),
       ),
       body: SingleChildScrollView(
@@ -247,28 +407,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 10),
             ...List.generate(4, (index) {
               final activity = _activities[index];
+              final String? imagePath = activity['imagePath'];
+              final String icon = activity['icon'] ?? '⭐';
+
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
+                padding: const EdgeInsets.only(bottom: 16.0),
                 child: Row(
                   children: [
-                    DropdownButton<String>(
-                      value: activity['icon'],
-                      items: _icons.map((icon) {
-                        return DropdownMenuItem(value: icon, child: Text(icon, style: const TextStyle(fontSize: 24)));
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => activity['icon'] = val);
-                        }
-                      },
+                    GestureDetector(
+                      onTap: () => _pickMedia(index),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F4FC),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.black12),
+                            ),
+                            child: (imagePath != null && imagePath.isNotEmpty)
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.file(File(imagePath), fit: BoxFit.cover),
+                                  )
+                                : Center(child: Text(icon, style: const TextStyle(fontSize: 32))),
+                          ),
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF6A7BFE),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit, size: 12, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: TextFormField(
                         initialValue: activity['label'],
                         decoration: InputDecoration(
-                          hintText: 'Activity Name',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          labelText: 'Activity Name',
+                          hintText: 'e.g., Read a Book',
+                          filled: true,
+                          fillColor: const Color(0xFFF2F4FC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         onChanged: (val) => activity['label'] = val,
                       ),
@@ -279,18 +472,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }),
 
             const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () => widget.onSave(_selectedColor, _selectedDuration, _activities),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6A7BFE),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: const Text('Save Settings', style: TextStyle(color: Colors.white, fontFamily: 'Fredoka', fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-            ),
           ],
         ),
       ),

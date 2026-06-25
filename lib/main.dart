@@ -140,6 +140,9 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
 
       if (source != null) {
         await _audioPlayer.stop();
+        await _audioPlayer.setReleaseMode(
+          (type == 'celebration' || type == 'start') ? ReleaseMode.loop : ReleaseMode.stop,
+        );
         await _audioPlayer.play(source);
       }
     } catch (e) {
@@ -149,6 +152,14 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
 
   void _stopSound() {
     _audioPlayer.stop();
+  }
+
+  void _pauseSound() {
+    _audioPlayer.pause();
+  }
+
+  void _resumeSound() {
+    _audioPlayer.resume();
   }
 
   @override
@@ -172,6 +183,8 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
           durationMinutes: _durationMinutes,
           characterColor: _characterColor,
           onPlaySound: _playSound,
+          onPause: _pauseSound,
+          onResume: _resumeSound,
           onTimeUp: () {
             _playSound('timesup');
             setState(() => _currentScreen = 'transition');

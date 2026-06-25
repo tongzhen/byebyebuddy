@@ -7,6 +7,8 @@ class CountdownScreen extends StatefulWidget {
   final Color characterColor;
   final VoidCallback onTimeUp;
   final Function(String) onPlaySound;
+  final VoidCallback onPause;
+  final VoidCallback onResume;
 
   const CountdownScreen({
     super.key,
@@ -14,6 +16,8 @@ class CountdownScreen extends StatefulWidget {
     required this.characterColor,
     required this.onTimeUp,
     required this.onPlaySound,
+    required this.onPause,
+    required this.onResume,
   });
 
   @override
@@ -100,6 +104,11 @@ class _CountdownScreenState extends State<CountdownScreen> {
   void _togglePlayPause() {
     setState(() {
       _isPaused = !_isPaused;
+      if (_isPaused) {
+        widget.onPause();
+      } else {
+        widget.onResume();
+      }
     });
   }
 

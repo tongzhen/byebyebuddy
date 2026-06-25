@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum BuddyState { happy, warning, transition, cheering }
+enum BuddyState { happy, warning, transition, cheering, timesUp }
 
 class BuddyCharacter extends StatefulWidget {
   final BuddyState state;
@@ -21,6 +21,8 @@ class _BuddyCharacterState extends State<BuddyCharacter>
   late AnimationController _breathingController;
   late AnimationController _blinkingController;
   late AnimationController _wavingController;
+  late AnimationController _hopController;
+  late AnimationController _pulseController;
 
   @override
   void initState() {
@@ -40,6 +42,30 @@ class _BuddyCharacterState extends State<BuddyCharacter>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
+
+    _hopController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+  }
+
+  @override
+  void didUpdateWidget(BuddyCharacter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state == BuddyState.timesUp && oldWidget.state != BuddyState.timesUp) {
+      _hopController.repeat(reverse: true);
+      _pulseController.repeat(reverse: true);
+    } else if (widget.state != BuddyState.timesUp) {
+      _hopController.stop();
+      _hopController.reset();
+      _pulseController.stop();
+      _pulseController.reset();
+    }
   }
 
   @override
@@ -47,6 +73,8 @@ class _BuddyCharacterState extends State<BuddyCharacter>
     _breathingController.dispose();
     _blinkingController.dispose();
     _wavingController.dispose();
+    _hopController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -57,6 +85,8 @@ class _BuddyCharacterState extends State<BuddyCharacter>
         _breathingController,
         _blinkingController,
         _wavingController,
+        _hopController,
+        _pulseController,
       ]),
       builder: (context, child) {
         return SizedBox(
@@ -69,6 +99,8 @@ class _BuddyCharacterState extends State<BuddyCharacter>
               breathVal: _breathingController.value,
               blinkVal: _blinkingController.value,
               waveVal: _wavingController.value,
+              hopVal: _hopController.value,
+              pulseVal: _pulseController.value,
             ),
           ),
         );
@@ -83,6 +115,8 @@ class BuddyPainter extends CustomPainter {
   final double breathVal;
   final double blinkVal;
   final double waveVal;
+  final double hopVal;
+  final double pulseVal;
 
   BuddyPainter({
     required this.state,
@@ -90,11 +124,21 @@ class BuddyPainter extends CustomPainter {
     required this.breathVal,
     required this.blinkVal,
     required this.waveVal,
+    required this.hopVal,
+    required this.pulseVal,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
+
+    // 0. Glow Effect for TimesUp
+    if (state == BuddyState.timesUp) {
+      final glowPaint = Paint()
+        ..color = Colors.yellow.withValues(alpha: 0.3 * pulseVal)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
+      canvas.drawCircle(center, 70 + (pulseVal * 20), glowPaint);
+    }
 
     // 1. Draw Feet
     final orangePaint = Paint()..color = const Color(0xFFE67E22);
@@ -127,6 +171,9 @@ class BuddyPainter extends CustomPainter {
     } else if (state == BuddyState.cheering) {
       leftArmAngle = -0.6 + (waveVal * 0.3);
       rightArmAngle = 0.6 - (waveVal * 0.3);
+    } else if (state == BuddyState.timesUp) {
+      leftArmAngle = -1.2 + (waveVal * 0.8); // High double wave
+      rightArmAngle = 1.2 - (waveVal * 0.8);
     }
 
     // Left Arm
@@ -158,9 +205,11 @@ class BuddyPainter extends CustomPainter {
     // 3. Draw Body (with gentle scale breathing)
     canvas.save();
     final scaleY = 1.0 + (breathVal * 0.03);
-    canvas.translate(center.dx, size.height * 0.85);
+    final verticalOffset = state == BuddyState.timesUp ? (-hopVal * 20.0) : 0.0;
+    
+    canvas.translate(center.dx, size.height * 0.85 + verticalOffset);
     canvas.scale(2.0 - scaleY, scaleY);
-    canvas.translate(-center.dx, -size.height * 0.85);
+    canvas.translate(-center.dx, -(size.height * 0.85 + verticalOffset));
 
     // Leaf on Head
     final greenPaint = Paint()..color = const Color(0xFF2ECC71);
@@ -183,6 +232,20 @@ class BuddyPainter extends CustomPainter {
       ),
       bodyPaint,
     );
+
+    // Sparkles for TimesUp
+    if (state == BuddyState.timesUp) {
+      final sparklePaint = Paint()..color = Colors.white;
+      final sparklePos = [
+        Offset(size.width * 0.2, size.height * 0.3),
+        Offset(size.width * 0.8, size.height * 0.4),
+        Offset(size.width * 0.3, size.height * 0.7),
+        Offset(size.width * 0.7, size.height * 0.8),
+      ];
+      for (var pos in sparklePos) {
+        canvas.drawCircle(pos, 3 + (pulseVal * 4), sparklePaint);
+      }
+    }
 
     // 4. Rosy Cheeks
     final cheekPaint = Paint()

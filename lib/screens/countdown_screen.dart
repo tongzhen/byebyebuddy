@@ -46,9 +46,23 @@ class _CountdownScreenState extends State<CountdownScreen> {
           _checkWarnings();
         } else {
           _timer?.cancel();
-          widget.onTimeUp();
+          _triggerTimesUp();
         }
       });
+    });
+  }
+
+  void _triggerTimesUp() {
+    widget.onPlaySound('timesup');
+    setState(() {
+      _buddyState = BuddyState.timesUp;
+      _warningMessage = '🌟 Time is up! 🌟\nLet\'s choose what\'s next!';
+    });
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        widget.onTimeUp();
+      }
     });
   }
 
@@ -91,7 +105,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
 
   void _skipToTransition() {
     _timer?.cancel();
-    widget.onTimeUp();
+    _triggerTimesUp();
   }
 
   @override

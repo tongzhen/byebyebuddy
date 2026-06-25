@@ -180,6 +180,7 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
       case 'transition':
         return TransitionScreen(
           activities: _activities,
+          characterColor: _characterColor,
           onSelectActivity: (label) async {
             await _incrementStars();
             _playSound('celebration');

@@ -5,11 +5,13 @@ enum BuddyState { happy, warning, transition, cheering, timesUp }
 class BuddyCharacter extends StatefulWidget {
   final BuddyState state;
   final Color bodyColor;
+  final double size;
 
   const BuddyCharacter({
     super.key,
     required this.state,
     required this.bodyColor,
+    this.size = 200,
   });
 
   @override
@@ -90,8 +92,8 @@ class _BuddyCharacterState extends State<BuddyCharacter>
       ]),
       builder: (context, child) {
         return SizedBox(
-          width: 200,
-          height: 200,
+          width: widget.size,
+          height: widget.size,
           child: CustomPaint(
             painter: BuddyPainter(
               state: widget.state,

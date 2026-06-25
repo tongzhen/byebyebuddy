@@ -1,9 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/buddy_character.dart';
 
 class TransitionScreen extends StatelessWidget {
   final List<Map<String, String>> activities;
-  final Function(String) onSelectActivity;
+  final Function(String, String) onSelectActivity;
   final Color characterColor;
 
   const TransitionScreen({
@@ -12,6 +13,14 @@ class TransitionScreen extends StatelessWidget {
     required this.onSelectActivity,
     required this.characterColor,
   });
+
+  void _pickRandom() {
+    if (activities.isEmpty) return;
+    final random = math.Random();
+    final index = random.nextInt(activities.length);
+    final activity = activities[index];
+    onSelectActivity(activity['label']!, activity['icon']!);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,47 +74,73 @@ class TransitionScreen extends StatelessWidget {
                     mainAxisSpacing: 16,
                     childAspectRatio: 1.1,
                   ),
-                  itemCount: activities.length,
+                  itemCount: activities.length + 1, // +1 for "Pick for me"
                   itemBuilder: (context, index) {
-                    final activity = activities[index];
-                    return ElevatedButton(
-                      onPressed: () => onSelectActivity(activity['label']!),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: Colors.black.withValues(alpha: 0.05),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        padding: const EdgeInsets.all(12),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            activity['icon']!,
-                            style: const TextStyle(fontSize: 40),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            activity['label']!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'Fredoka',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2C3E50),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                    if (index < activities.length) {
+                      final activity = activities[index];
+                      return _buildActivityCard(
+                        icon: activity['icon']!,
+                        label: activity['label']!,
+                        onTap: () => onSelectActivity(activity['label']!, activity['icon']!),
+                      );
+                    } else {
+                      // The "Pick for me" button
+                      return _buildActivityCard(
+                        icon: '❓',
+                        label: 'Pick for me',
+                        onTap: _pickRandom,
+                        isSpecial: true,
+                      );
+                    }
                   },
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard({
+    required String icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isSpecial = false,
+  }) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSpecial ? const Color(0xFFD5F5E3) : Colors.white,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: isSpecial 
+            ? const BorderSide(color: Color(0xFF2ECC71), width: 2) 
+            : BorderSide.none,
+        ),
+        padding: const EdgeInsets.all(12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            icon,
+            style: const TextStyle(fontSize: 40),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Fredoka',
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isSpecial ? const Color(0xFF27AE60) : const Color(0xFF2C3E50),
+            ),
+          ),
+        ],
       ),
     );
   }

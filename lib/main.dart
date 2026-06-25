@@ -43,6 +43,8 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
   Source? _celebrationSource;
 
   String _currentScreen = 'home';
+  String? _selectedActivityLabel;
+  String? _selectedActivityIcon;
   int _stars = 0;
   Color _characterColor = const Color(0xFF5DADE2); // Sky Blue
   double _durationMinutes = 5.0;
@@ -219,14 +221,20 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
         return TransitionScreen(
           activities: _activities,
           characterColor: _characterColor,
-          onSelectActivity: (label) async {
+          onSelectActivity: (label, icon) async {
             await _incrementStars();
             _playSound('celebration');
-            setState(() => _currentScreen = 'celebration');
+            setState(() {
+              _selectedActivityLabel = label;
+              _selectedActivityIcon = icon;
+              _currentScreen = 'celebration';
+            });
           },
         );
       case 'celebration':
         return CelebrationScreen(
+          activityLabel: _selectedActivityLabel ?? '',
+          activityIcon: _selectedActivityIcon ?? '⭐',
           onFinish: () {
             _stopSound();
             setState(() => _currentScreen = 'home');

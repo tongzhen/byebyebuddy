@@ -10,6 +10,12 @@ void main() {
   });
 
   testWidgets('Full flow: Home -> Countdown -> Time up -> Transition -> Celebration', (WidgetTester tester) async {
+    // Set a larger screen size to ensure all transition activities are visible
+    tester.view.physicalSize = const Size(600, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     // 1. Build our app
     await tester.pumpWidget(const ByeByeBuddyApp());
     await tester.pump(const Duration(milliseconds: 500));
@@ -44,21 +50,23 @@ void main() {
     expect(find.textContaining('Time is up!'), findsOneWidget);
     
     // Wait for the 4-second delay in Time Up sequence
-    await tester.pump(const Duration(seconds: 4));
-    await tester.pump(); // Transition to Transition screen
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(milliseconds: 500));
 
     // 4. Verify Transition Screen
     expect(find.text('Time to say bye-bye!'), findsOneWidget);
     expect(find.text('Read a Book'), findsOneWidget);
+    expect(find.text('Pick for me'), findsOneWidget);
     expect(find.byType(BuddyCharacter), findsOneWidget);
 
-    // 5. Select an activity
-    await tester.tap(find.text('Read a Book'));
+    // 5. Select "Pick for me"
+    await tester.tap(find.text('Pick for me'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     // 6. Verify Celebration Screen
     expect(find.text('Yay! Great Job!'), findsOneWidget);
+    expect(find.textContaining('Time for'), findsOneWidget);
     expect(find.text('Let\'s Play!'), findsOneWidget);
 
     // 7. Finish

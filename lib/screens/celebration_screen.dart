@@ -3,10 +3,14 @@ import 'package:confetti/confetti.dart';
 
 class CelebrationScreen extends StatefulWidget {
   final VoidCallback onFinish;
+  final String activityLabel;
+  final String activityIcon;
 
   const CelebrationScreen({
     super.key,
     required this.onFinish,
+    required this.activityLabel,
+    required this.activityIcon,
   });
 
   @override
@@ -86,6 +90,40 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                           fontFamily: 'Fredoka',
                           fontSize: 18,
                           color: const Color(0xFF2C3E50).withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      // Selected Activity Display
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              widget.activityIcon,
+                              style: const TextStyle(fontSize: 60),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Time for ${widget.activityLabel}!',
+                              style: const TextStyle(
+                                fontFamily: 'Fredoka',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B59B6),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

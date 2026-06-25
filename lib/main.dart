@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -37,6 +38,10 @@ class MainRouter extends StatefulWidget {
 
 class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  StreamSubscription? _audioSubscription;
+  int _celebrationLoopsLeft = 0;
+  Source? _celebrationSource;
+
   String _currentScreen = 'home';
   int _stars = 0;
   Color _characterColor = const Color(0xFF5DADE2); // Sky Blue
@@ -54,10 +59,19 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadStoredSettings();
+
+    // Handle fixed loop counts (e.g. celebration playing 3 times)
+    _audioSubscription = _audioPlayer.onPlayerComplete.listen((event) {
+      if (_celebrationLoopsLeft > 0 && _celebrationSource != null) {
+        _celebrationLoopsLeft--;
+        _audioPlayer.play(_celebrationSource!);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _audioSubscription?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _audioPlayer.dispose();
     super.dispose();
@@ -140,9 +154,20 @@ class _MainRouterState extends State<MainRouter> with WidgetsBindingObserver {
 
       if (source != null) {
         await _audioPlayer.stop();
-        await _audioPlayer.setReleaseMode(
-          (type == 'celebration' || type == 'start') ? ReleaseMode.loop : ReleaseMode.stop,
-        );
+
+        if (type == 'celebration') {
+          // Play 1st time + 2 loops = 3 total plays
+          _celebrationLoopsLeft = 2;
+          _celebrationSource = source;
+          await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+        } else {
+          _celebrationLoopsLeft = 0;
+          _celebrationSource = null;
+          await _audioPlayer.setReleaseMode(
+            (type == 'start' || type == 'timesup') ? ReleaseMode.loop : ReleaseMode.stop,
+          );
+        }
+
         await _audioPlayer.play(source);
       }
     } catch (e) {
